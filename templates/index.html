@@ -99,7 +99,7 @@
             const resDiv = document.getElementById('explanationResult');
             resDiv.style.display = 'block';
             resDiv.innerHTML = '<em>Generating explanation...</em>';
-            const data = await fetchAPI('/explain/', 'POST', { topic });
+            const data = await fetchAPI('/explain', 'POST', { topic });
             resDiv.innerHTML = `<strong>Explanation:</strong><br>${data.explanation}`;
         });
 
@@ -110,7 +110,7 @@
             const resDiv = document.getElementById('summaryResult');
             resDiv.style.display = 'block';
             resDiv.innerHTML = '<em>Summarizing...</em>';
-            const data = await fetchAPI('/summarize/', 'POST', { text });
+            const data = await fetchAPI('/summarize', 'POST', { text });
             resDiv.innerHTML = `<strong>Summary:</strong><br>${data.summary}`;
         });
 // 4. Quiz Generation
