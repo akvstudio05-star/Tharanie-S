@@ -1,0 +1,172 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>EduGenie - Learning Assistant</title>
+    
+</head>
+<body>
+    <div class="container">
+        <h1>Welcome to EduGenie 🧠✨</h1>
+        <p class="subtitle">Your personal AI tutor for learning support!</p>
+
+        <!-- Section 1: Q&A -->
+        <div class="card">
+            <h3>Ask EduGenie a Question:</h3>
+            <form id="qaForm">
+                <div class="input-group">
+                    <input type="text" id="question" placeholder="Why is the sky blue?" required>
+                    <button type="submit">Get Answer</button>
+                </div>
+            </form>
+            <div id="qaResult" class="output"></div>
+        </div>
+
+        <!-- Section 2: Explanation -->
+        <div class="card">
+            <h3>Need an Explanation?</h3>
+            <form id="explainForm">
+                <div class="input-group">
+                    <input type="text" id="topic" placeholder="Photosynthesis" required>
+                    <button type="submit">Explain</button>
+                </div>
+            </form>
+            <div id="explanationResult" class="output"></div>
+        </div>
+
+        <!-- Section 3: Summary -->
+        <div class="card">
+            <h3>Summarize a Paragraph:</h3>
+            <form id="summaryForm">
+                <div class="input-group">
+                    <input type="text" id="summaryText" placeholder="Paste long content to summarize" required>
+                    <button type="submit">Summarize</button>
+                </div>
+            </form>
+            <div id="summaryResult" class="output"></div>
+        </div>
+
+        <!-- Section 4: Quiz Generation -->
+        <div class="card">
+            <h3>Generate a Quiz:</h3>
+            <form id="quizForm">
+                <div class="input-group">
+                    <input type="text" id="quizText" placeholder="Solar System" required>
+                    <button type="submit">Generate Quiz</button>
+                </div>
+            </form>
+            <div id="quizResult" class="output"></div>
+        </div>
+
+        <!-- Section 5: Learning Recommendations -->
+        <div class="card">
+            <h3>Get Learning Recommendations:</h3>
+            <form id="recommendForm">
+                <div class="input-group">
+                    <input type="text" id="recommendTopic" placeholder="e.g. Linear Regression or SQL" required>
+                    <button type="submit">Get Recommendations</button>
+                </div>
+            </form>
+            <div id="recommendResult" class="output"></div>
+        </div>
+    </div>
+
+    <script>
+        // Helper to perform fetch requests
+        async function fetchAPI(url, method = 'GET', body = null) {
+            const options = { method, headers: { 'Content-Type': 'application/json' } };
+            if (body) options.body = JSON.stringify(body);
+            const res = await fetch(url, options);
+            return res.json();
+        }
+
+        // 1. Q&A
+        document.getElementById('qaForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const q = document.getElementById('question').value;
+            const resDiv = document.getElementById('qaResult');
+            resDiv.style.display = 'block';
+            resDiv.innerHTML = '<em>Thinking...</em>';
+            const data = await fetchAPI(`/qa?question=${encodeURIComponent(q)}`);
+            resDiv.innerHTML = `<strong>Answer:</strong><br>${data.answer}`;
+        });
+
+        // 2. Explanation
+        document.getElementById('explainForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const topic = document.getElementById('topic').value;
+            const resDiv = document.getElementById('explanationResult');
+            resDiv.style.display = 'block';
+            resDiv.innerHTML = '<em>Generating explanation...</em>';
+            const data = await fetchAPI('/explain/', 'POST', { topic });
+            resDiv.innerHTML = `<strong>Explanation:</strong><br>${data.explanation}`;
+        });
+
+        // 3. Summary
+        document.getElementById('summaryForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const text = document.getElementById('summaryText').value;
+            const resDiv = document.getElementById('summaryResult');
+            resDiv.style.display = 'block';
+            resDiv.innerHTML = '<em>Summarizing...</em>';
+            const data = await fetchAPI('/summarize/', 'POST', { text });
+            resDiv.innerHTML = `<strong>Summary:</strong><br>${data.summary}`;
+        });
+// 4. Quiz Generation
+document.getElementById('quizForm').addEventListener('submit', async (e) => {
+    e.preventDefault();
+
+    const text = document.getElementById('quizText').value;
+
+    const resDiv = document.getElementById('quizResult');
+    resDiv.style.display = 'block';
+    resDiv.innerHTML = '<em>Creating quiz...</em>';
+
+    const data = await fetchAPI('/quiz', 'POST', { topic: text });
+
+    if (data.quiz && Array.isArray(data.quiz)) {
+        let html = '<strong>Quiz:</strong><br><br>';
+        data.quiz.forEach((q, idx) => {
+            html += `<div style="margin-bottom:15px;">
+                <strong>Q${idx + 1}: ${q.question}</strong><br>`;
+            Object.entries(q.options).forEach(([key, opt]) => {
+    html += `<label><input type="radio" name="q_${idx}" value="${key}"> ${key}: ${opt}</label><br>`;
+});
+            html += `<button type="button" style="margin-top:5px; padding:4px 8px;" onclick="checkAnswer(${idx}, '${q.answer}')">Check Answer</button>
+            <span id="feedback_${idx}" style="margin-left:10px;"></span>
+            </div>`;
+        });
+        resDiv.innerHTML = html;
+    } else {
+        resDiv.innerHTML = 'Error loading quiz.';
+    }
+});
+
+        function checkAnswer(qIdx, correctAnswer) {
+            const selected = document.querySelector(`input[name="q_${qIdx}"]:checked`);
+            const feedback = document.getElementById(`feedback_${qIdx}`);
+            if (!selected) {
+                feedback.innerHTML = '<span style="color:orange;">Please select an option.</span>';
+                return;
+            }
+            if (selected.value === correctAnswer) {
+                feedback.innerHTML = '<span style="color:green;">✅ Correct!</span>';
+            } else {
+                feedback.innerHTML = `<span style="color:red;">❌ Incorrect. Correct answer: ${correctAnswer}</span>`;
+            }
+        }
+
+        // 5. Learning Recommendations
+        document.getElementById('recommendForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const topic = document.getElementById('recommendTopic').value;
+            const resDiv = document.getElementById('recommendResult');
+            resDiv.style.display = 'block';
+            resDiv.innerHTML = '<em>Finding best learning paths...</em>';
+            const data = await fetchAPI(`/learn/recommendations?topic=${encodeURIComponent(topic)}`);
+            resDiv.innerHTML = `<strong>Learning Recommendations for "${data.topic}":</strong><br><pre style="white-space: pre-wrap; font-family: inherit;">${data.recommendation}</pre>`;
+        });
+    </script>
+</body>
+</html>
